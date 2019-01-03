@@ -1,0 +1,10 @@
+Assembly Language:
+
+nop
+push 4
+push 10
+add
+
+Scripting Language:
+
+var x = 4 + 10;
