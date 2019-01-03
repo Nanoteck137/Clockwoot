@@ -1,4 +1,4 @@
-Assembly Language:
+Bytecode Language:
 
 nop
 push 4
