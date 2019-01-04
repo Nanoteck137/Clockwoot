@@ -1,4 +1,5 @@
 from collections import deque, namedtuple
+from enum import IntEnum, auto
 
 
 def insnop(vm):
@@ -17,6 +18,13 @@ def inspop(vm):
     vm.popstack()
 
 
+def insdup(vm):
+    # TODO(patrik): Add a peek stack method on the vm
+    val = vm.popstack()
+    vm.pushstack(val)
+    vm.pushstack(val)
+
+
 def insload(vm):
     index = vm.readpc()
     vm.pushstack(vm.storage[index])
@@ -24,7 +32,24 @@ def insload(vm):
 
 def insstore(vm):
     index = vm.readpc()
+    try:
+        del vm.storage[index]
+    except:
+        pass
+
     vm.storage.insert(index, vm.popstack())
+
+
+def insjmp(vm):
+    count = vm.readpc()
+    vm.pc += count
+
+
+def insbrz(vm):
+    count = vm.readpc()
+    val = vm.popstack()
+    if val == 0:
+        vm.pc += count
 
 
 def insadd(vm):
@@ -51,36 +76,51 @@ def insdiv(vm):
     vm.pushstack(left / right)
 
 
-NOP = 0x00
-HALT = 0x01
+class TestEnum(IntEnum):
+    def _generate_next_value_(name, start, count, last_values):
+        return count
 
-PUSH = 0x02
-POP = 0x03
 
-LOAD = 0x04
-STORE = 0x05
+class Instruction(TestEnum):
+    NOP = auto()
+    HALT = auto()
 
-ADD = 0x06
-SUB = 0x07
-MUL = 0x08
-DIV = 0x09
+    PUSH = auto()
+    POP = auto()
+    DUP = auto()
+
+    LOAD = auto()
+    STORE = auto()
+
+    JMP = auto()
+    BRZ = auto()
+
+    ADD = auto()
+    SUB = auto()
+    MUL = auto()
+    DIV = auto()
+
 
 InsTuple = namedtuple("InstructionTuple", ["name", "operands", "func"])
 
 instructions = []
-instructions.insert(NOP, InsTuple("nop", 0, insnop))
-instructions.insert(HALT, InsTuple("halt", 0, inshalt))
+instructions.insert(Instruction.NOP, InsTuple("nop", 0, insnop))
+instructions.insert(Instruction.HALT, InsTuple("halt", 0, inshalt))
 
-instructions.insert(PUSH, InsTuple("push", 1, inspush))
-instructions.insert(POP, InsTuple("pop", 1, inspop))
+instructions.insert(Instruction.PUSH, InsTuple("push", 1, inspush))
+instructions.insert(Instruction.POP, InsTuple("pop", 0, inspop))
+instructions.insert(Instruction.DUP, InsTuple("dup", 0, insdup))
 
-instructions.insert(LOAD, InsTuple("load", 1, insload))
-instructions.insert(STORE, InsTuple("store", 1, insstore))
+instructions.insert(Instruction.LOAD, InsTuple("load", 1, insload))
+instructions.insert(Instruction.STORE, InsTuple("store", 1, insstore))
 
-instructions.insert(ADD, InsTuple("add", 0, insadd))
-instructions.insert(SUB, InsTuple("sub", 0, inssub))
-instructions.insert(MUL, InsTuple("mul", 0, insmul))
-instructions.insert(DIV, InsTuple("div", 0, insdiv))
+instructions.insert(Instruction.JMP, InsTuple("jmp", 1, insjmp))
+instructions.insert(Instruction.BRZ, InsTuple("brz", 1, insbrz))
+
+instructions.insert(Instruction.ADD, InsTuple("add", 0, insadd))
+instructions.insert(Instruction.SUB, InsTuple("sub", 0, inssub))
+instructions.insert(Instruction.MUL, InsTuple("mul", 0, insmul))
+instructions.insert(Instruction.DIV, InsTuple("div", 0, insdiv))
 
 
 class Bytecode:
@@ -110,7 +150,7 @@ class VM:
         self.bytecode = bytecode
         self.pc = 0
         self.running = True
-        self.stack = deque(maxlen=10)
+        self.stack = deque([], maxlen=10)
         self.storage = []
 
     def readpc(self):

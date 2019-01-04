@@ -38,7 +38,7 @@ class MyParser(Parser):
     @_("KEYWORD_VAR IDENTIFIER EQUALS expr SEMICOLON")
     def statement(self, p):
         self.storageTable[p.IDENTIFIER] = self.storageIndex
-        self.bytecode.emit(vm.STORE)
+        self.bytecode.emit(vm.Instruction.STORE)
         self.bytecode.emit(self.storageIndex)
         self.storageIndex += 1
 
@@ -46,9 +46,9 @@ class MyParser(Parser):
        "expr MINUS expr1")
     def expr(self, p):
         if p[1] == '+':
-            self.bytecode.emit(vm.ADD)
+            self.bytecode.emit(vm.Instruction.ADD)
         else:
-            self.bytecode.emit(vm.SUB)
+            self.bytecode.emit(vm.Instruction.SUB)
 
     @_("expr1")
     def expr(self, p):
@@ -58,9 +58,9 @@ class MyParser(Parser):
        "expr1 FORWARD_SLASH expr2")
     def expr1(self, p):
         if p[1] == '*':
-            self.bytecode.emit(vm.MUL)
+            self.bytecode.emit(vm.Instruction.MUL)
         else:
-            self.bytecode.emit(vm.DIV)
+            self.bytecode.emit(vm.Instruction.DIV)
 
     @_("expr2")
     def expr1(self, p):
@@ -68,10 +68,10 @@ class MyParser(Parser):
 
     @_("NUMBER")
     def expr2(self, p):
-        self.bytecode.emit(vm.PUSH)
+        self.bytecode.emit(vm.Instruction.PUSH)
         self.bytecode.emit(int(p[0]))
 
     @_("IDENTIFIER")
     def expr2(self, p):
-        self.bytecode.emit(vm.LOAD)
+        self.bytecode.emit(vm.Instruction.LOAD)
         self.bytecode.emit(self.storageTable[p.IDENTIFIER])
